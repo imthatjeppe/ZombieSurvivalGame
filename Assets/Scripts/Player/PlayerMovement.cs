@@ -10,12 +10,11 @@ public class PlayerMovement : MonoBehaviour
 
     private float startSpeed;
     Rigidbody rb;
-    bool grounded;
+    public bool grounded;
 
     void Start()
     {
         rb = GetComponent<Rigidbody>();
-        grounded = true;
         startSpeed = speed;
     }
 
@@ -25,8 +24,6 @@ public class PlayerMovement : MonoBehaviour
         Movement();
         Jump();
     }
-
-
     void Movement()
     {
         var horizontal = Input.GetAxis("Horizontal");
@@ -53,13 +50,18 @@ public class PlayerMovement : MonoBehaviour
 
     private void OnTriggerEnter(Collider other)
     {
-        grounded = false;
+        if (other.gameObject.CompareTag("Ground"))
+        {
+            grounded = true;
+        }
     }
 
     private void OnTriggerExit(Collider other)
     {
-        grounded = true;
+        if (other.gameObject.CompareTag("Ground"))
+        {
+            grounded = false;
+        }
     }
-
 }
 
