@@ -4,63 +4,132 @@ using UnityEngine;
 
 public class PlayerMovement : MonoBehaviour
 {
-    public float jumpBoost;
-    public float speed;
-    public float runSpeed;
+    [SerializeField]
+    private float maximumSpeed;
+
+    [SerializeField]
+    private float runSpeed;
+
+
+    [SerializeField]
+    private float rotationSpeed;
+
+    [SerializeField]
+    private float jumpSpeed;
+
+    [SerializeField]
+    private float jumpButtonGracePeriod;
+
+    [SerializeField]
+    private Transform cameraTransform;
+
+    private Animator animator;
+    private CharacterController characterController;
+    private float ySpeed;
+    private float originalStepOffset;
+    private float? lastGroundedTime;
+    private float? jumpButtonPressedTime;
 
     private float startSpeed;
-    Rigidbody rb;
-    public bool grounded;
+    
 
+
+    // Start is called before the first frame update
     void Start()
     {
-        rb = GetComponent<Rigidbody>();
-        startSpeed = speed;
+        characterController = GetComponent<CharacterController>();
+        originalStepOffset = characterController.stepOffset;
+        startSpeed = maximumSpeed;
     }
 
     // Update is called once per frame
     void Update()
     {
-        Movement();
-        Jump();
-    }
-    void Movement()
-    {
-        var horizontal = Input.GetAxis("Horizontal");
-        var vertical = Input.GetAxis("Vertical");
-        transform.Translate(new Vector3(horizontal, 0, vertical) * (speed * Time.deltaTime));
+        movement();
 
-        if (Input.GetKey(KeyCode.LeftShift))
+        sprint();
+    }
+    private void movement() {
+        //movement
+        float horizontalInput = Input.GetAxis("Horizontal");
+        float verticalInput = Input.GetAxis("Vertical");
+
+        Vector3 movementDirection = new Vector3(horizontalInput, 0, verticalInput);
+        float inputMagnitude = Mathf.Clamp01(movementDirection.magnitude);
+
+        if (Input.GetKey(KeyCode.LeftShift) || Input.GetKey(KeyCode.RightShift))
         {
-            speed = runSpeed;
+            inputMagnitude /= 2;
+        }
+
+
+        float speed = inputMagnitude * maximumSpeed;
+        movementDirection = Quaternion.AngleAxis(cameraTransform.rotation.eulerAngles.y, Vector3.up) * movementDirection;
+        movementDirection.Normalize();
+
+        //Jumping
+        ySpeed += Physics.gravity.y * Time.deltaTime;
+
+        if (characterController.isGrounded)
+        {
+            lastGroundedTime = Time.time;
+        }
+
+        if (Input.GetButtonDown("Jump"))
+        {
+            jumpButtonPressedTime = Time.time;
+        }
+
+        if (Time.time - lastGroundedTime <= jumpButtonGracePeriod)
+        {
+            characterController.stepOffset = originalStepOffset;
+            ySpeed = -0.5f;
+
+            if (Time.time - jumpButtonPressedTime <= jumpButtonGracePeriod)
+            {
+                ySpeed = jumpSpeed;
+                jumpButtonPressedTime = null;
+                lastGroundedTime = null;
+            }
         }
         else
         {
-            speed = startSpeed;
+            characterController.stepOffset = 0;
         }
-        
-    }
-    void Jump()
-    {
-        if (Input.GetKeyDown(KeyCode.Space) && grounded)
+
+        Vector3 velocity = movementDirection * speed;
+        velocity.y = ySpeed;
+
+        characterController.Move(velocity * Time.deltaTime);
+
+        if (movementDirection != Vector3.zero)
         {
-            rb.AddForce(Vector3.up * jumpBoost, ForceMode.Impulse);
+            Quaternion toRotation = Quaternion.LookRotation(movementDirection, Vector3.up);
+
+            transform.rotation = Quaternion.RotateTowards(transform.rotation, toRotation, rotationSpeed * Time.deltaTime);
         }
     }
 
-    private void OnTriggerEnter(Collider other)
+    private void sprint()
     {
-        if (other.gameObject.CompareTag("Ground"))
+        if (Input.GetKey(KeyCode.LeftShift))
         {
-            grounded = true;
+            maximumSpeed = runSpeed;
+        }
+        else
+        {
+            maximumSpeed = startSpeed;
         }
     }
-
-    private void OnTriggerExit(Collider other)
+    private void OnApplicationFocus(bool focus)
     {
-        if (other.gameObject.CompareTag("Ground"))
+        if (focus)
         {
-            grounded = false;
+            Cursor.lockState = CursorLockMode.Locked;
+        }
+        else
+        {
+            Cursor.lockState = CursorLockMode.None;
         }
     }
 }
