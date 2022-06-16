@@ -10,7 +10,6 @@ public class PlayerMovement : MonoBehaviour
     [SerializeField]
     private float runSpeed;
 
-
     [SerializeField]
     private float rotationSpeed;
 
