@@ -14,7 +14,6 @@ public class Shooting : MonoBehaviour
     {
         bulletSpawnPoint = GameObject.FindGameObjectWithTag("Player").transform;
         Enemy = GameObject.FindGameObjectsWithTag("Enemy");
-
     }
 
     // Update is called once per frame
@@ -34,5 +33,5 @@ public class Shooting : MonoBehaviour
         {
             Destroy(other.gameObject);
         }
-    }
+    } 
 }
