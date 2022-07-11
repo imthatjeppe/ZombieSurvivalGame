@@ -12,7 +12,7 @@ public class Shooting : MonoBehaviour
     // Start is called before the first frame update
     void Start()
     {
-        bulletSpawnPoint = GameObject.FindGameObjectWithTag("Player").transform;
+        bulletSpawnPoint = GameObject.FindGameObjectWithTag("Gun").transform;
         Enemy = GameObject.FindGameObjectsWithTag("Enemy");
     }
 
@@ -25,7 +25,6 @@ public class Shooting : MonoBehaviour
             bullet.GetComponent<Rigidbody>().velocity = bulletSpawnPoint.forward * bulletSpeed;
         }
     }
-
     private void OnTriggerEnter(Collider other)
     {
 
